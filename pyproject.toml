@@ -1,0 +1,38 @@
+[project]
+name = "kvn-qsvt"
+version = "0.1.0"
+description = "Quantum Singular Value Transformation for Koopman-von Neumann Dynamics"
+authors = [
+    {name = "Authors", email = "example@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.20.0",
+    "scipy>=1.7.0",
+    "qulacs>=0.3.0",
+    "mpi4py>=3.0.0",
+    "matplotlib>=3.3.0",
+    "jupyter>=1.0.0",
+    "notebook>=6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "black>=21.0",
+    "flake8>=3.9",
+    "mypy>=0.910",
+]
+
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools-scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 88
