@@ -1,38 +1,110 @@
 [project]
-name = "kvn-qsvt"
+name = "kvn-qsvt-qulacs"
 version = "0.1.0"
-description = "Quantum Singular Value Transformation for Koopman-von Neumann Dynamics"
+description = "Koopman-von Neumann Linearized electromagnetic fluid simulation using Quantum Singular Value Transformation"
 authors = [
-    {name = "Authors", email = "example@example.com"}
+    {name = "Hayato Higuchi", email = "higuchi@qunasys.com"},
+    {name = "Yuki Ito"},
+    {name = "Kazuki Sakamoto"},
+    {name = "Keisuke Fujii"},
+    {name = "Akimasa Yoshikawa"}
 ]
 readme = "README.md"
-requires-python = ">=3.8"
+license = {text = "MIT"}  
+requires-python = ">=3.9"
+keywords = ["quantum computing", "QSVT", "fluid simulation", "Koopman operator"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
 dependencies = [
-    "numpy>=1.20.0",
-    "scipy>=1.7.0",
-    "qulacs>=0.3.0",
-    "mpi4py>=3.0.0",
-    "matplotlib>=3.3.0",
-    "jupyter>=1.0.0",
-    "notebook>=6.0.0",
+    "numpy>=1.24.0,<2.0", 
+    "scipy>=1.10.0",
+    "qulacs>=0.6.0",
+    "matplotlib>=3.6.0",
+    "mpmath>=1.3.0",  
 ]
 
 [project.optional-dependencies]
+mpi = [
+    "mpi4py>=3.1.0",
+]
+notebook = [
+    "jupyter>=1.0.0",
+    "notebook>=7.0.0",
+    "ipykernel>=6.0.0",
+]
 dev = [
-    "pytest>=6.0",
-    "black>=21.0",
-    "flake8>=3.9",
-    "mypy>=0.910",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.5.0",
+    "isort>=5.12.0",
+]
+all = [
+    "kvn-qsvt-qulacs[mpi,notebook,dev]",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Hayato-Higuchi/KvN-QSVT-Qulacs"
+Issues = "https://github.com/Hayato-Higuchi/KvN-QSVT-Qulacs/issues"
+
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools-scm>=6.2"]
+requires = ["setuptools>=65", "wheel", "setuptools-scm>=7.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["kvn_qsvt_qulacs*"]
+exclude = ["tests*"]
 
 [tool.black]
 line-length = 88
-target-version = ['py38']
+target-version = ['py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = """
+^/(
+  build
+  | dist
+  | .eggs
+  | .git
+  | .mypy_cache
+  | .pytest_cache
+  | .venv
+  | venv
+)/
+"""
 
 [tool.isort]
 profile = "black"
 line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = [
+    "--cov=kvn_qsvt_qulacs",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "-v"
+]

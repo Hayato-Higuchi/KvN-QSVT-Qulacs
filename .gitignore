@@ -132,7 +132,6 @@ dmypy.json
 # Results and data
 results/
 circuit_data/
-*.npy
 *.npz
 *.pkl
 *.pickle
