@@ -8,7 +8,7 @@ import csv
 from mpi4py import MPI 
 from scipy.special import comb
 
-from KvN_2D_function import *
+from sub_function_2D import *
 
 # Initialize MPI
 comm = MPI.COMM_WORLD
