@@ -1,13 +1,7 @@
 import time
-from qulacs import QuantumCircuit as QulacsCircuit
-from qulacs.gate import DenseMatrix, to_matrix_gate, CNOT, RX, RZ, H
-from qulacs import QuantumState
 import numpy as np
-from scipy.linalg import sqrtm
-import csv
 from mpi4py import MPI 
 from scipy.special import comb
-
 from sub_function_2D import *
 
 # Initialize MPI
@@ -19,7 +13,7 @@ comm.barrier()
 start_time = time.time()
 
 # Time step width
-tau = 1
+tau = 5
 # Number of time steps
 Total_steps = 100
 # Total time
@@ -42,12 +36,11 @@ mass = 1
 # Charge
 q = -1
 # Number of variables
-# N = 5 * num_grid
 N = 5 * num_grid**2
 # Upper bound on total particle number
 m = 1
 # Size of the Hamiltonian matrix
-M = int(comb(m + N, m))  # Hamiltonian_matrix_2D(delta_x, delta_y, Lambda, density, epsilon_0, mu_0, mass, q, m, num_grid).shape[0]
+M = int(comb(m + N, m)) 
 # Number of x-qubits
 n_x = math.floor(np.log2(M)) + 1
 # Number of ancilla qubits required for U
@@ -77,10 +70,7 @@ Bz_flatten = Bz[:, :, 0].T.ravel()
 # Prepare initial state
 x = np.concatenate([ux_flatten, uy_flatten, Ex_flatten, Ey_flatten, Bz_flatten])
 
-ux, uy, Ex, Ey, Bz, alpha = HS_TestSim_U_Hamiltonian_matrix(
-    n_x, n_a, tau, delta_x, delta_y, Lambda, density, mu_0, epsilon_0, mass, q, m,
-    num_grid, N, M, ux, uy, Ex, Ey, Bz, Total_steps
-)
+ux, uy, Ex, Ey, Bz, alpha = HS_TestSim_U_Hamiltonian_matrix_sparse(n_x, n_a, tau, delta_x, delta_y, Lambda, density, mu_0, epsilon_0, mass, q, m, num_grid, N, M, ux, uy, Ex, Ey, Bz, Total_steps)
 
 # Stop timing (synchronize across all processes)
 comm.barrier()
@@ -91,7 +81,7 @@ if rank == 0:
     print(f"Execution time (parallel): {end_time - start_time:.2f} seconds")
 
 # Save in binary format
-filename = '2DKelvin-Helmholtz_u_numgrid_{}_nx_{}_delta_x_{}_T_{}_delta_t_{}_m_{}.npy'.format(num_grid, n_x, delta_x, T, tau, m)
+filename = 'output/CaseD/2DKelvin-Helmholtz_u_numgrid_{}_nx_{}_delta_x_{}_T_{}_delta_t_{}_m_{}.npy'.format(num_grid, n_x, delta_x, T, tau, m)
 np.save(filename, u)
-filename = '2DKelvin-Helmholtz_E_numgrid_{}_nx_{}_delta_x_{}_T_{}_delta_t_{}_m_{}.npy'.format(num_grid, n_x, delta_x, T, tau, m)
+filename = 'output/CaseD/2DKelvin-Helmholtz_E_numgrid_{}_nx_{}_delta_x_{}_T_{}_delta_t_{}_m_{}.npy'.format(num_grid, n_x, delta_x, T, tau, m)
 np.save(filename, E)
