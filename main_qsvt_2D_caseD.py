@@ -13,13 +13,13 @@ comm.barrier()
 start_time = time.time()
 
 # Time step width
-tau = 5
+tau = 25
 # Number of time steps
-Total_steps = 100
+Total_steps = 2000
 # Total time
 T = Total_steps * tau
 # Number of spatial grid points
-num_grid = 4
+num_grid = 20
 # Spatial grid spacing
 delta_x = 1
 delta_y = 1
@@ -38,7 +38,7 @@ q = -1
 # Number of variables
 N = 5 * num_grid**2
 # Upper bound on total particle number
-m = 1
+m = 2
 # Size of the Hamiltonian matrix
 M = int(comb(m + N, m)) 
 # Number of x-qubits

@@ -1,6 +1,6 @@
 # Koopman-von Neumann Linearized Electromagnetic Fluid Simulation using Quantum Singular Value Transformation
 
-Quantum algorithm implementation for simulating electromagnetic fluid dynamics using the Koopman-von Neumann (KvN) framework with Quantum Singular Value Transformation (QSVT).
+This repository provides an implementation of a quantum algorithm for simulating electromagnetic fluid dynamics using the Koopman-von Neumann (KvN) framework with Quantum Singular Value Transformation (QSVT).
 
 ## Requirements
 
@@ -124,6 +124,29 @@ mpiexec -n 4 python main_qsvt_2D_caseD.py
     └── normalized_U_matrix_*.npz       # Precomputed unitary matrices
 ```
 
+
+## Reproducing the figures in the paper
+
+All figures in the paper can be regenerated from the data stored in `output/` by running the analysis notebooks. The parameter sets used for each case are:
+
+| Figure | Case | Script(s) | Key parameters |
+|---|---|---|---|
+| Fig. 2 | A | `main_{qsvt,expm}_1D_caseA.ipynb` → `analysis_1D_caseA.ipynb` | `num_grid=8, m=1, tau=1, Total_steps=200, Lambda=1e4, mass=1` |
+| Fig. 3 | B | `main_{qsvt,expm}_1D_caseBC.ipynb` → `analysis_1D_caseBC.ipynb` | `num_grid=8, m={2,3,4}, Total_steps={210,710,2056}, tau=1, delta_x=1, Lambda=1, mass=100` |
+| Fig. 4 (new) | B | `classical_rk4_1D_caseBC.py` | RK4 reference vs stored KvN-expm data (`dt=0.005`) |
+| Fig. 5 | C | `main_{qsvt,expm}_1D_caseBC.ipynb` → `analysis_1D_caseBC.ipynb` | `m=2, num_grid={11,22,33,44}, Total_steps={142,262,381,500}` |
+| Figs. 6–7 | D | `main_qsvt_2D_caseD.py` (MPI), `main_expm_2D_caseD.ipynb` → `analysis_2D_caseD.ipynb` | `num_grid=20, m=2; QSVT: tau=25, Total_steps=2000; expm: tau=500, Total_steps=100` |
+
+The physical time of the k-th stored step is `t_k = k * tau / alpha`, where `alpha` is the Frobenius norm of the truncated Hamiltonian used for normalization (printed by the main scripts).
+
+### Classical RK4 reference (new)
+
+`classical_rk4_1D_caseBC.py` integrates the same central-difference semi-discrete system with a classical 4th-order Runge–Kutta method and compares it with the stored KvN-expm data for m = 2, 3, 4, producing `output/CaseBC/1DAdvectionTest_expm_vs_RK4.pdf` (Fig. 4 of the revised paper).
+
+```bash
+python classical_rk4_1D_caseBC.py
+```
+
 ## Key Features
 
 - **Quantum Singular Value Transformation (QSVT)**: Implementation of QSVT-based Hamiltonian simulation for linear quantum algorithms
@@ -138,11 +161,11 @@ mpiexec -n 4 python main_qsvt_2D_caseD.py
 If you use this code in your research, please cite the original paper:
 
 ```bibtex
-@article{ito2024quantum,
-  title={Quantum Algorithm for Electromagnetic Fluid Simulation based on Koopman-von Neumann Mechanics},
-  author={Ito, Yuki and Higuchi, Hayato and Sakamoto, Kazuki and Yoshikawa, Akimasa and Fujii, Keisuke},
+@article{HiguchiandIto2025prxq,
+  title={A Quantum Algorithm for Nonlinear Electromagnetic Fluid Dynamics via Koopman-von~Neumann Linearization},
+  author={Higuchi, Hayato and Ito, Yuki and Sakamoto, Kazuki and Fujii, Keisuke and Yoshikawa, Akimasa},
   journal={arXiv preprint arXiv:2509.22503},
-  year={2024},
+  year={2025},
   url={https://arxiv.org/abs/2509.22503}
 }
 ```
@@ -164,3 +187,19 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 For questions, issues, or contributions, please:
 - Open an issue on the [GitHub repository](https://github.com/Hayato-Higuchi/KvN-QSVT-Qulacs/issues)
 - Contact the maintainer at higuchi@qunasys.com
+
+### R-dependence study (new Fig. 5 of the revised paper)
+
+Generate the QSVT phase factors for `R = 2, 3, 5, 7, 9` (tau = 1) and run the
+Case-B R sweep:
+
+```bash
+python qsvt_phase_generation_1D.py   # writes output/qsvt_phases/{cos,sin}1x_R{R}.csv (~4 min)
+python qsvt_R_sweep_1D_caseB.py      # runs R = 3,5,7,9 and creates output/CaseBC/1DAdvectionTest_qsvt_R_dependence.pdf (~2.5 min)
+python qsvt_R_sweep_1D_caseB.py reuse  # re-plot from the saved .npy data without re-running
+```
+
+`qsvt_R_sweep_1D_caseB.py` first verifies that rerunning the pipeline with the
+original phase files (`output/cos1x.csv`, `output/sin1x.csv`) reproduces the
+stored Case-B data to ~2e-12. Note that those original files implement the
+degree-(4,5) Jacobi-Anger truncation (R = 2); see `FIXES.md`, item 8.
