@@ -201,9 +201,6 @@ def main():
     for R in R_LIST:
         ax2.semilogy(wt[1:], np.maximum(dev(results[R], x_dir)[1:], 1e-16),
                      color=colors[R], lw=1.3, label=rf"$R={R}$")
-    ax2.semilogy(wt[1:], np.maximum(dev(x_orig, x_dir)[1:], 1e-16),
-                 color="0.4", ls=":", lw=1.3,
-                 label="original phase files (deg. 4/5)")
     ax2.set_xlabel(r"$\omega_{p,e}\,t$", fontsize=13)
     ax2.set_ylabel(r"$\|\mathbf{x}_{R}-\mathbf{x}_{\mathrm{exact}}\|"
                    r"/\|\mathbf{x}_{\mathrm{exact}}\|$", fontsize=12)
