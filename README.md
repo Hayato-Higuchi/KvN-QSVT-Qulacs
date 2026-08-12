@@ -86,6 +86,33 @@ jupyter notebook
 
 Then open and execute the desired notebook (e.g., `main_qsvt_1D_caseA.ipynb`).
 
+All Case A--C data and figures can also be generated in one command:
+
+```bash
+python run_1D_cases.py
+```
+
+The matrix, circuit, and time-grid checks can be run with:
+
+```bash
+python verify_1D.py
+```
+
+The normalized Hamiltonian is defined by
+`H_tilde = H / alpha`, with `alpha = ||H||_F`.  Both KvN-QSVT and
+KvN-expm use `tau = 1`, corresponding to the common physical step
+`dt = tau / alpha` for each parameter set.  The physical variables obtained
+after each step define the input state for the next step in both methods.
+The main Case A--C KvN-QSVT results use `R = 5` phase factors.
+The Case B norm-deviation comparison uses `R = 3` so that the QSVT
+truncation contribution can be resolved alongside the finite-`m` KvN
+deviation.  This calculation and its figure can be regenerated independently
+with:
+
+```bash
+python case_b_norm_deviation_1D.py
+```
+
 ### Running MPI-Parallelized Simulations
 
 For 2D simulations using MPI:
@@ -106,6 +133,10 @@ mpiexec -n 4 python main_qsvt_2D_caseD.py
 ├── pyproject.toml                      # Project configuration and dependencies
 ├── sub_function_1D.py                  # Core functions for 1D KvN-QSVT implementation
 ├── sub_function_2D.py                  # Core functions for 2D KvN-QSVT implementation (MPI-parallel)
+├── simulation_1D.py                    # Case A--C numerical propagators and time grids
+├── analysis_1D.py                      # Case A--C figure generation and validation
+├── run_1D_cases.py                     # Complete Case A--C workflow
+├── verify_1D.py                        # Matrix, circuit, and time-grid checks
 ├── main_qsvt_1D_caseA.ipynb           # 1D QSVT simulation (Case A)
 ├── main_expm_1D_caseA.ipynb           # 1D matrix exponential simulation (Case A)
 ├── analysis_1D_caseA.ipynb            # Analysis notebook for Case A
@@ -132,16 +163,17 @@ All figures in the paper can be regenerated from the data stored in `output/` by
 | Figure | Case | Script(s) | Key parameters |
 |---|---|---|---|
 | Fig. 2 | A | `main_{qsvt,expm}_1D_caseA.ipynb` → `analysis_1D_caseA.ipynb` | `num_grid=8, m=1, tau=1, Total_steps=200, Lambda=1e4, mass=1` |
-| Fig. 3 | B | `main_{qsvt,expm}_1D_caseBC.ipynb` → `analysis_1D_caseBC.ipynb` | `num_grid=8, m={2,3,4}, Total_steps={210,710,2056}, tau=1, delta_x=1, Lambda=1, mass=100` |
-| Fig. 4 (new) | B | `classical_rk4_1D_caseBC.py` | RK4 reference vs stored KvN-expm data (`dt=0.005`) |
-| Fig. 5 | C | `main_{qsvt,expm}_1D_caseBC.ipynb` → `analysis_1D_caseBC.ipynb` | `m=2, num_grid={11,22,33,44}, Total_steps={142,262,381,500}` |
+| Fig. 3 | B | `case_b_norm_deviation_1D.py` | `num_grid=8, m={2,3,4}, R=3, Total_steps={210,710,2056}, tau=1, delta_x=1, Lambda=1, mass=100` |
+| RK4 comparison | B | `classical_rk4_1D_caseBC.py` | RK4 reference at the exact KvN sampling times; `dt_RK4=(tau/alpha)/128` |
+| QSVT R dependence | B | `qsvt_R_sweep_1D_caseB.py` | `R={3,5,7,9}` with the same per-step state input as KvN-expm |
+| Grid dependence | C | `main_{qsvt,expm}_1D_caseBC.ipynb` → `analysis_1D_caseBC.ipynb` | `m=2, num_grid={11,22,33,44}, Total_steps={142,262,381,500}` |
 | Figs. 6–7 | D | `main_qsvt_2D_caseD.py` (MPI), `main_expm_2D_caseD.ipynb` → `analysis_2D_caseD.ipynb` | `num_grid=20, m=2; QSVT: tau=25, Total_steps=2000; expm: tau=500, Total_steps=100` |
 
 The physical time of the k-th stored step is `t_k = k * tau / alpha`, where `alpha` is the Frobenius norm of the truncated Hamiltonian used for normalization (printed by the main scripts).
 
-### Classical RK4 reference (new)
+### Classical RK4 reference
 
-`classical_rk4_1D_caseBC.py` integrates the same central-difference semi-discrete system with a classical 4th-order Runge–Kutta method and compares it with the stored KvN-expm data for m = 2, 3, 4, producing `output/CaseBC/1DAdvectionTest_expm_vs_RK4.pdf` (Fig. 4 of the revised paper).
+`classical_rk4_1D_caseBC.py` integrates the same central-difference semi-discrete system with a classical fourth-order Runge-Kutta method and compares it with the KvN-expm data for `m = 2, 3, 4`, producing `output/CaseBC/1DAdvectionTest_expm_vs_RK4.pdf`.
 
 ```bash
 python classical_rk4_1D_caseBC.py
@@ -188,18 +220,12 @@ For questions, issues, or contributions, please:
 - Open an issue on the [GitHub repository](https://github.com/Hayato-Higuchi/KvN-QSVT-Qulacs/issues)
 - Contact the maintainer at higuchi@qunasys.com
 
-### R-dependence study (new Fig. 5 of the revised paper)
+### R-dependence study
 
-Generate the QSVT phase factors for `R = 2, 3, 5, 7, 9` (tau = 1) and run the
+Generate the QSVT phase factors for `R = 3, 5, 7, 9` (`tau = 1`) and run the
 Case-B R sweep:
 
 ```bash
-python qsvt_phase_generation_1D.py   # writes output/qsvt_phases/{cos,sin}1x_R{R}.csv (~4 min)
-python qsvt_R_sweep_1D_caseB.py      # runs R = 3,5,7,9 and creates output/CaseBC/1DAdvectionTest_qsvt_R_dependence.pdf (~2.5 min)
-python qsvt_R_sweep_1D_caseB.py reuse  # re-plot from the saved .npy data without re-running
+python qsvt_phase_generation_1D.py
+python qsvt_R_sweep_1D_caseB.py
 ```
-
-`qsvt_R_sweep_1D_caseB.py` first verifies that rerunning the pipeline with the
-original phase files (`output/cos1x.csv`, `output/sin1x.csv`) reproduces the
-stored Case-B data to ~2e-12. Note that those original files implement the
-degree-(4,5) Jacobi-Anger truncation (R = 2); see `FIXES.md`, item 8.

@@ -139,3 +139,4 @@ circuit_data/
 # Temporary files
 *.tmp
 *.temp
+tmp/

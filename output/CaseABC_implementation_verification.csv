@@ -1,0 +1,9 @@
+check,value,tolerance,passed
+alpha_sparse_dense,4.440892098500626e-16,1e-12,True
+alpha_sparse_circuit,4.440892098500626e-16,1e-12,True
+hamiltonian_sparse_dense_max_abs,2.7755575615628914e-17,1e-12,True
+expm_sparse_dense_two_step_relative,3.1789956519596876e-16,1e-12,True
+qsvt_polynomial_circuit_two_step_relative,1.763801954525961e-14,1e-12,True
+rk4_time_grid_residual_m2,0.0,1e-15,True
+rk4_time_grid_residual_m3,0.0,1e-15,True
+rk4_time_grid_residual_m4,0.0,1e-15,True

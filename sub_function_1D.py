@@ -28,17 +28,18 @@ Function file for 1D KvN-embedded QSVT Hamiltonian simulation (Qulacs version)
 """
 
 
-def load_phi_vec(dt):
+def load_phi_vec(dt, R=5):
     """
         Function to load precomputed phase (phi) values for QSVT
     """
-    with open('output/cos{}x.csv'.format(dt)) as f:
+    dt_label = '{:g}'.format(dt)
+    with open('output/qsvt_phases/cos{}x_R{}.csv'.format(dt_label, R)) as f:
         reader = csv.reader(f)
         for row in reader:
             cos_phi_vec = np.array(row)
     cos_phi_vec = [float(s) for s in cos_phi_vec]
 
-    with open('output/sin{}x.csv'.format(dt)) as f:
+    with open('output/qsvt_phases/sin{}x_R{}.csv'.format(dt_label, R)) as f:
         reader = csv.reader(f)
         for row in reader:
             sin_phi_vec = np.array(row)
@@ -279,12 +280,7 @@ def V_gate(qc, n_a, n_x, U, cos_phi_vec, sin_phi_vec):
 
 
 def HS_TestSim_U_Hamiltonian_matrix(n_x, n_a, tau, delta_x, Lambda, density, epsilon_0, mass, q, m, num_grid, M, u, E, Total_steps):
-    """
-        Test execution function for QSVT Hamiltonian simulation: sequential time evolution with fine tau
-            Input: n_x, n_a, tau, delta_x, Lambda, density, epsilon_0, mass, q, m, num_grid, M, x
-                tau = alpha*T
-            Output: u, E, alpha
-    """
+    """Run the QSVT time evolution and return the physical variables."""
     psi = np.zeros((2**(math.floor(np.log2(M)) + 1), Total_steps + 1))
     # Initial state preparation
     x = np.concatenate((u[:, 0], E[:, 0]))
@@ -298,23 +294,18 @@ def HS_TestSim_U_Hamiltonian_matrix(n_x, n_a, tau, delta_x, Lambda, density, eps
     U, alpha = U_Hamiltonian_matrix(delta_x, Lambda, density, epsilon_0, mass, q, m, num_grid)
     cos_phi_vec, sin_phi_vec = load_phi_vec(tau)
 
-    # Time evolution
     for t in range(1, Total_steps + 1):
         V_gate(qc, n_a, n_x, U, cos_phi_vec, sin_phi_vec)
-        # Measurement
         psi[:, t] = statevector_measurement(n_x, qc, qs)
-        # Quantum circuit initialization, next time step state preparation
-        norm = np.sqrt(sum([abs(_) ** 2 for _ in psi[:, t]]))
-        qc = QulacsCircuit(num_qubits)
-        qs.set_zero_state()
-        qs = initialize_quantum_state(n_a, num_qubits, psi[:,t]/norm)
-        qc.update_quantum_state(qs)
-        # Restore normalization
         psi[:, t] = psi[:, t] * norm_psi / Lambda * np.pi ** (2 * num_grid / 4) / 2 ** (1 / 2) * 2 ** (2 / 2)
-        # Extract physical quantities
         for i in range(num_grid):
             u[i, t] = psi[i + 1, t]
             E[i, t] = psi[i + num_grid + 1, t]
+        x = np.concatenate((u[:, t], E[:, t]))
+        psi_next, norm_psi = state_preparation(2 * num_grid, M, x, Lambda)
+        qc = QulacsCircuit(num_qubits)
+        qs = initialize_quantum_state(n_a, num_qubits, psi_next)
+        qc.update_quantum_state(qs)
         print("step={}".format(t))
 
     return u, E, alpha
