@@ -103,14 +103,22 @@ The normalized Hamiltonian is defined by
 KvN-expm use `tau = 1`, corresponding to the common physical step
 `dt = tau / alpha` for each parameter set.  The physical variables obtained
 after each step define the input state for the next step in both methods.
-The main Case A--C KvN-QSVT results use `R = 5` phase factors.
+The main Case A and Case B KvN-QSVT results use `R = 5` phase factors.
 The Case B norm-deviation comparison uses `R = 3` so that the QSVT
 truncation contribution can be resolved alongside the finite-`m` KvN
-deviation.  This calculation and its figure can be regenerated independently
+deviation. This calculation and its figure can be regenerated independently
 with:
 
 ```bash
 python case_b_norm_deviation_1D.py
+```
+
+The Case C grid study uses `R = 2` to make the finite-`R` difference from
+KvN-expm visible. It keeps the domain length fixed at `L = 44` and uses
+`delta_x = L / num_grid`. It can be regenerated independently with:
+
+```bash
+python case_c_grid_convergence_1D.py
 ```
 
 ### Running MPI-Parallelized Simulations
@@ -137,6 +145,8 @@ mpiexec -n 4 python main_qsvt_2D_caseD.py
 ├── analysis_1D.py                      # Case A--C figure generation and validation
 ├── run_1D_cases.py                     # Complete Case A--C workflow
 ├── verify_1D.py                        # Matrix, circuit, and time-grid checks
+├── case_b_norm_deviation_1D.py         # Case B finite-m and finite-R comparison
+├── case_c_grid_convergence_1D.py       # Case C fixed-domain grid study
 ├── main_qsvt_1D_caseA.ipynb           # 1D QSVT simulation (Case A)
 ├── main_expm_1D_caseA.ipynb           # 1D matrix exponential simulation (Case A)
 ├── analysis_1D_caseA.ipynb            # Analysis notebook for Case A
@@ -166,7 +176,7 @@ All figures in the paper can be regenerated from the data stored in `output/` by
 | Fig. 3 | B | `case_b_norm_deviation_1D.py` | `num_grid=8, m={2,3,4}, R=3, Total_steps={210,710,2056}, tau=1, delta_x=1, Lambda=1, mass=100` |
 | RK4 comparison | B | `classical_rk4_1D_caseBC.py` | RK4 reference at the exact KvN sampling times; `dt_RK4=(tau/alpha)/128` |
 | QSVT R dependence | B | `qsvt_R_sweep_1D_caseB.py` | `R={3,5,7,9}` with the same per-step state input as KvN-expm |
-| Grid dependence | C | `main_{qsvt,expm}_1D_caseBC.ipynb` → `analysis_1D_caseBC.ipynb` | `m=2, num_grid={11,22,33,44}, Total_steps={142,262,381,500}` |
+| Grid dependence | C | `case_c_grid_convergence_1D.py` | `L=44, m=2, R=2, num_grid={11,22,33,44}, delta_x={4,2,4/3,1}, Total_steps={128,250,374,500}` |
 | Figs. 6–7 | D | `main_qsvt_2D_caseD.py` (MPI), `main_expm_2D_caseD.ipynb` → `analysis_2D_caseD.ipynb` | `num_grid=20, m=2; QSVT: tau=25, Total_steps=2000; expm: tau=500, Total_steps=100` |
 
 The physical time of the k-th stored step is `t_k = k * tau / alpha`, where `alpha` is the Frobenius norm of the truncated Hamiltonian used for normalization (printed by the main scripts).

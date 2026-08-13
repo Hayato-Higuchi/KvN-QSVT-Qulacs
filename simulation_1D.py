@@ -42,6 +42,10 @@ class Case1D:
             self.density / (self.epsilon_0 * self.mass)
         )
 
+    @property
+    def domain_length(self):
+        return self.num_grid * self.delta_x
+
 
 CASE_A = Case1D("A", 8, 1, 200, 1.0, 1.0e4, 1.0, 1.0, 1.0, -1.0)
 CASE_B = (
@@ -49,15 +53,29 @@ CASE_B = (
     Case1D("B", 8, 3, 710, 1.0, 1.0, 1.0, 1.0, 100.0, -1.0),
     Case1D("B", 8, 4, 2056, 1.0, 1.0, 1.0, 1.0, 100.0, -1.0),
 )
+CASE_C_LENGTH = 44.0
 CASE_C = (
-    Case1D("C", 11, 2, 142, 1.0, 1.0, 1.0, 1.0, 100.0, -1.0),
-    Case1D("C", 22, 2, 262, 1.0, 1.0, 1.0, 1.0, 100.0, -1.0),
-    Case1D("C", 33, 2, 381, 1.0, 1.0, 1.0, 1.0, 100.0, -1.0),
-    Case1D("C", 44, 2, 500, 1.0, 1.0, 1.0, 1.0, 100.0, -1.0),
+    Case1D(
+        "C", 11, 2, 128, CASE_C_LENGTH / 11,
+        1.0, 1.0, 1.0, 100.0, -1.0,
+    ),
+    Case1D(
+        "C", 22, 2, 250, CASE_C_LENGTH / 22,
+        1.0, 1.0, 1.0, 100.0, -1.0,
+    ),
+    Case1D(
+        "C", 33, 2, 374, CASE_C_LENGTH / 33,
+        1.0, 1.0, 1.0, 100.0, -1.0,
+    ),
+    Case1D(
+        "C", 44, 2, 500, CASE_C_LENGTH / 44,
+        1.0, 1.0, 1.0, 100.0, -1.0,
+    ),
 )
 
 DEFAULT_QSVT_R = 5
 CASE_B_NORM_QSVT_R = 3
+CASE_C_QSVT_R = 2
 
 
 def number_to_occupations(index, length):
@@ -348,7 +366,7 @@ def load_trajectory(case, method, output_root="output", qsvt_R=None):
 
 
 def run_case(case, method, output_root="output", coefficients=None,
-             progress=False):
+             progress=False, qsvt_R=None):
     basis = occupation_basis(case.max_particles, case.num_variables)
     hamiltonian, alpha, basis = hamiltonian_matrix(case, basis)
     encoder = StateEncoder(basis, case.Lambda)
@@ -357,12 +375,18 @@ def run_case(case, method, output_root="output", coefficients=None,
             case, hamiltonian, encoder, progress=progress
         )
     elif method == "qsvt":
+        if qsvt_R is None:
+            qsvt_R = (
+                CASE_C_QSVT_R
+                if case.label == "C"
+                else DEFAULT_QSVT_R
+            )
         if coefficients is None:
             coefficients = qsvt_polynomial_coefficients(
                 Path(output_root)
-                / f"qsvt_phases/cos1x_R{DEFAULT_QSVT_R}.csv",
+                / f"qsvt_phases/cos1x_R{qsvt_R}.csv",
                 Path(output_root)
-                / f"qsvt_phases/sin1x_R{DEFAULT_QSVT_R}.csv",
+                / f"qsvt_phases/sin1x_R{qsvt_R}.csv",
             )
         trajectory = propagate_qsvt(
             case,
@@ -373,10 +397,19 @@ def run_case(case, method, output_root="output", coefficients=None,
         )
     else:
         raise ValueError("method must be 'expm' or 'qsvt'")
-    paths = save_trajectory(case, method, trajectory, output_root)
+    output_R = (
+        qsvt_R
+        if method == "qsvt" and qsvt_R != DEFAULT_QSVT_R
+        else None
+    )
+    paths = save_trajectory(
+        case, method, trajectory, output_root, qsvt_R=output_R
+    )
     metadata = {
         "case": case.label,
         "num_grid": case.num_grid,
+        "domain_length": case.domain_length,
+        "delta_x": case.delta_x,
         "m": case.max_particles,
         "alpha": alpha,
         "tau": case.tau,
@@ -384,7 +417,7 @@ def run_case(case, method, output_root="output", coefficients=None,
         "steps": case.steps,
         "physical_final_time": case.steps * case.tau / alpha,
         "omega_dt": case.plasma_frequency * case.tau / alpha,
-        "qsvt_R": DEFAULT_QSVT_R,
+        "qsvt_R": qsvt_R if method == "qsvt" else "",
     }
     return trajectory, metadata, paths
 
@@ -399,6 +432,8 @@ def write_metadata(records, path="output/CaseABC_time_steps.csv"):
     fields = (
         "case",
         "num_grid",
+        "domain_length",
+        "delta_x",
         "m",
         "alpha",
         "tau",

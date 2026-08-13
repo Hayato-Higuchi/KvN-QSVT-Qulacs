@@ -279,7 +279,7 @@ def V_gate(qc, n_a, n_x, U, cos_phi_vec, sin_phi_vec):
     qc.add_gate(H(q_b))
 
 
-def HS_TestSim_U_Hamiltonian_matrix(n_x, n_a, tau, delta_x, Lambda, density, epsilon_0, mass, q, m, num_grid, M, u, E, Total_steps):
+def HS_TestSim_U_Hamiltonian_matrix(n_x, n_a, tau, delta_x, Lambda, density, epsilon_0, mass, q, m, num_grid, M, u, E, Total_steps, R=5):
     """Run the QSVT time evolution and return the physical variables."""
     psi = np.zeros((2**(math.floor(np.log2(M)) + 1), Total_steps + 1))
     # Initial state preparation
@@ -292,7 +292,7 @@ def HS_TestSim_U_Hamiltonian_matrix(n_x, n_a, tau, delta_x, Lambda, density, eps
     qc.update_quantum_state(qs)
     # Hamiltonian
     U, alpha = U_Hamiltonian_matrix(delta_x, Lambda, density, epsilon_0, mass, q, m, num_grid)
-    cos_phi_vec, sin_phi_vec = load_phi_vec(tau)
+    cos_phi_vec, sin_phi_vec = load_phi_vec(tau, R)
 
     for t in range(1, Total_steps + 1):
         V_gate(qc, n_a, n_x, U, cos_phi_vec, sin_phi_vec)

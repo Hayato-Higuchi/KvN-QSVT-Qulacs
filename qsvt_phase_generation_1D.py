@@ -8,7 +8,7 @@ from scipy.special import jv
 
 
 TAU = 1.0
-R_VALUES = (3, 5, 7, 9)
+R_VALUES = (2, 3, 5, 7, 9)
 OUTPUT_DIRECTORY = Path("output/qsvt_phases")
 RANDOM_SEED = 20260702
 

@@ -6,9 +6,11 @@ import numpy as np
 
 from simulation_1D import (
     CASE_B_NORM_QSVT_R,
+    CASE_C_QSVT_R,
     CASE_A,
     CASE_B,
     CASE_C,
+    DEFAULT_QSVT_R,
     hamiltonian_matrix,
     load_trajectory,
     occupation_basis,
@@ -156,12 +158,13 @@ def plot_case_b(qsvt_R=CASE_B_NORM_QSVT_R):
     )
 
 
-def plot_case_c():
+def plot_case_c(qsvt_R=CASE_C_QSVT_R):
     return plot_norm_deviation(
         CASE_C,
         "N_x",
         "output/CaseBC/1DAdvectionTest_"
         "L2norm_deviation_error_x_various_Nx.pdf",
+        qsvt_R=qsvt_R,
     )
 
 
@@ -169,14 +172,18 @@ def write_validation(path="output/CaseABC_validation.csv"):
     path = Path(path)
     rows = []
     for case in (CASE_A,) + CASE_B + CASE_C:
-        qsvt = load_trajectory(case, "qsvt")
+        qsvt_R = CASE_C_QSVT_R if case.label == "C" else None
+        qsvt = load_trajectory(case, "qsvt", qsvt_R=qsvt_R)
         expm = load_trajectory(case, "expm")
         error = relative_error(qsvt, expm)
         rows.append(
             {
                 "case": case.label,
                 "num_grid": case.num_grid,
+                "domain_length": case.domain_length,
+                "delta_x": case.delta_x,
                 "m": case.max_particles,
+                "qsvt_R": qsvt_R or DEFAULT_QSVT_R,
                 "maximum_qsvt_expm_relative_error": np.max(error[1:]),
                 "final_qsvt_expm_relative_error": error[-1],
                 "maximum_qsvt_norm_deviation": np.max(norm_deviation(qsvt)),

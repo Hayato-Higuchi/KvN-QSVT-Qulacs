@@ -94,6 +94,41 @@ def main():
     )
     circuit_qsvt = np.vstack([velocity, electric])
 
+    coefficients_R2 = qsvt_polynomial_coefficients(
+        "output/qsvt_phases/cos1x_R2.csv",
+        "output/qsvt_phases/sin1x_R2.csv",
+    )
+    polynomial_qsvt_R2 = propagate_qsvt(
+        case,
+        sparse_hamiltonian,
+        encoder,
+        coefficients_R2,
+        values=initial_values(case),
+    )
+    velocity_R2 = np.zeros((case.num_grid, case.steps + 1))
+    electric_R2 = np.zeros((case.num_grid, case.steps + 1))
+    velocity_R2[:, 0] = initial_values(case)[:case.num_grid]
+    velocity_R2, electric_R2, _ = HS_TestSim_U_Hamiltonian_matrix(
+        case.num_qubits,
+        1,
+        case.tau,
+        case.delta_x,
+        case.Lambda,
+        case.density,
+        case.epsilon_0,
+        case.mass,
+        case.charge,
+        case.max_particles,
+        case.num_grid,
+        math.comb(case.max_particles + case.num_variables,
+                  case.max_particles),
+        velocity_R2,
+        electric_R2,
+        case.steps,
+        R=2,
+    )
+    circuit_qsvt_R2 = np.vstack([velocity_R2, electric_R2])
+
     records = [
         {
             "check": "alpha_sparse_dense",
@@ -120,6 +155,13 @@ def main():
         {
             "check": "qsvt_polynomial_circuit_two_step_relative",
             "value": relative_norm(polynomial_qsvt, circuit_qsvt),
+            "tolerance": 1.0e-12,
+        },
+        {
+            "check": "qsvt_R2_polynomial_circuit_two_step_relative",
+            "value": relative_norm(
+                polynomial_qsvt_R2, circuit_qsvt_R2
+            ),
             "tolerance": 1.0e-12,
         },
     ]

@@ -7,6 +7,7 @@ from qsvt_R_sweep_1D_caseB import main as run_R_sweep
 from qsvt_phase_generation_1D import main as generate_phases
 from simulation_1D import (
     CASE_B_NORM_QSVT_R,
+    CASE_C_QSVT_R,
     DEFAULT_QSVT_R,
     StateEncoder,
     all_cases,
@@ -33,7 +34,11 @@ def main():
     phase_directory = Path("output/qsvt_phases")
     required = [
         phase_directory / f"{branch}1x_R{R}.csv"
-        for R in (CASE_B_NORM_QSVT_R, DEFAULT_QSVT_R)
+        for R in (
+            CASE_C_QSVT_R,
+            CASE_B_NORM_QSVT_R,
+            DEFAULT_QSVT_R,
+        )
         for branch in ("cos", "sin")
     ]
     if not all(path.exists() for path in required):
@@ -46,6 +51,14 @@ def main():
         phase_directory / f"cos1x_R{CASE_B_NORM_QSVT_R}.csv",
         phase_directory / f"sin1x_R{CASE_B_NORM_QSVT_R}.csv",
     )
+    case_c_coefficients = qsvt_polynomial_coefficients(
+        phase_directory / f"cos1x_R{CASE_C_QSVT_R}.csv",
+        phase_directory / f"sin1x_R{CASE_C_QSVT_R}.csv",
+    )
+    qsvt_coefficients = {
+        DEFAULT_QSVT_R: coefficients,
+        CASE_C_QSVT_R: case_c_coefficients,
+    }
     metadata = []
     for case in all_cases():
         basis = occupation_basis(case.max_particles, case.num_variables)
@@ -57,14 +70,26 @@ def main():
         )
         save_trajectory(case, "expm", expm)
 
+        qsvt_R = (
+            CASE_C_QSVT_R
+            if case.label == "C"
+            else DEFAULT_QSVT_R
+        )
         qsvt = propagate_qsvt(
             case,
             hamiltonian,
             encoder,
-            coefficients,
+            qsvt_coefficients[qsvt_R],
             progress=True,
         )
-        save_trajectory(case, "qsvt", qsvt)
+        save_trajectory(
+            case,
+            "qsvt",
+            qsvt,
+            qsvt_R=(
+                qsvt_R if qsvt_R != DEFAULT_QSVT_R else None
+            ),
+        )
 
         if case.label == "B":
             case_b_norm_qsvt = propagate_qsvt(
@@ -84,6 +109,8 @@ def main():
         record = {
             "case": case.label,
             "num_grid": case.num_grid,
+            "domain_length": case.domain_length,
+            "delta_x": case.delta_x,
             "m": case.max_particles,
             "alpha": alpha,
             "tau": case.tau,
@@ -91,7 +118,7 @@ def main():
             "steps": case.steps,
             "physical_final_time": case.steps * case.tau / alpha,
             "omega_dt": case.plasma_frequency * case.tau / alpha,
-            "qsvt_R": DEFAULT_QSVT_R,
+            "qsvt_R": qsvt_R,
         }
         metadata.append(record)
         print(
